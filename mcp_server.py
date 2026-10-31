@@ -2,11 +2,15 @@
 import os
 import httpx
 import uvicorn
+
 from fastmcp import FastMCP
+from main import app as rest_app
 
 mcp = FastMCP("ESP32 Cloud Light Controller")
 
-WORKER_URL = "https://esp32-public-api.nagachaitanyathatipamula.workers.dev"
+WORKER_URL = (
+    "https://esp32-public-api.nagachaitanyathatipamula.workers.dev"
+)
 
 
 async def call_worker(path: str, method: str = "GET"):
@@ -49,28 +53,25 @@ async def turn_light_off():
     return await call_worker("/light/off", "POST")
 
 
-# Create the MCP HTTP application
 mcp_app = mcp.http_app(path="/mcp")
 
 
-# Add a separate health endpoint
+# REST endpoints handled by main.py
+REST_PATHS = {
+    "/",
+    "/health",
+    "/auth-test",
+    "/commands",
+    "/device/next",
+    "/docs",
+    "/openapi.json",
+    "/redoc"
+}
+
+
 async def app(scope, receive, send):
-    if scope["type"] == "http" and scope["path"] == "/health":
-        body = b'{"status":"ok"}'
-
-        await send({
-            "type": "http.response.start",
-            "status": 200,
-            "headers": [
-                (b"content-type", b"application/json"),
-                (b"content-length", str(len(body)).encode())
-            ]
-        })
-
-        await send({
-            "type": "http.response.body",
-            "body": body
-        })
+    if scope["type"] == "http" and scope["path"] in REST_PATHS:
+        await rest_app(scope, receive, send)
     else:
         await mcp_app(scope, receive, send)
 
