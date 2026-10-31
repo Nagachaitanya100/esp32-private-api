@@ -47,3 +47,13 @@ def get_command(authorization: str = Header(None)):
     pending_command = None
 
     return {"command": command}
+
+@app.get("/auth-test")
+def auth_test(authorization: str = Header(None)):
+    if authorization != f"Bearer {PUBLIC_API_TOKEN}":
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    return {
+        "status": "authenticated",
+        "service": "ESP32 Private API"
+    }
