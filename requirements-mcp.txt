@@ -1,3 +1,5 @@
-fastmcp
+fastapi
+uvicorn[standard]
+pydantic
 httpx
-uvicorn
+fastmcp
